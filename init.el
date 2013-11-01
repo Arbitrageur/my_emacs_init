@@ -1,4 +1,4 @@
-2;; emacs kicker --- kick start emacs setup
+;; emacs kicker --- kick start emacs setup
 ;; Copyright (C) 2010 Dimitri Fontaine
 ;;
 ;; Author: Dimitri Fontaine <dim@tapoueh.org>
@@ -23,6 +23,8 @@
 (elpy-enable)
 
 (load-theme 'sanityinc-tomorrow-day t)
+(require 'magit)
+(global-set-key (kbd "C-x C-z") 'magit-status)
 
 (require 'cl)				; common lisp goodies, loop
 
@@ -64,9 +66,9 @@
 	  :url "https://github.com/illusori/emacs-flymake"
 	  :compile "flymake.el")
 
-   ;; (:name magit				; git meet emacs, and a binding
-   ;; 	  :after (progn
-   ;; 		   (global-set-key (kbd "C-x C-z") 'magit-status)))
+;;   (:name magit				; git meet emacs, and a binding
+;;   	  :after (progn
+;;   		   (global-set-key (kbd "C-x C-z") 'magit-status)))
 
    (:name goto-last-change		; move pointer back to last change
 	  :after (progn
