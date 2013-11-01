@@ -16,10 +16,14 @@
 (setq exec-path (append '("~/bin") exec-path))
 (setq exec-path (append '("/Library/Frameworks/Python.framework/Versions/2.7/bin/") exec-path))
 
-(require 'package)
-(add-to-list 'package-archives
-	     '("melpa" . "http://melpa.milkbox.net/packages/") t)
-(package-initialize)
+(require 'cask "~/.cask/cask.el")
+(cask-initialize)
+(require 'pallet)
+
+;; (require 'package)
+;; (add-to-list 'package-archives
+;; 	     '("melpa" . "http://melpa.milkbox.net/packages/") t)
+;; (package-initialize)
 (elpy-enable)
 
 (load-theme 'sanityinc-tomorrow-day t)
