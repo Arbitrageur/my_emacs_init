@@ -11,27 +11,45 @@
 (setq max-lisp-eval-depth 9999)
 (setq max-specpdl-size 9999)
 
-;; Exec-path
-(setq exec-path (append '("/usr/local/bin") exec-path))
-(setq exec-path (append '("~/bin") exec-path))
-(setq exec-path (append '("/Library/Frameworks/Python.framework/Versions/2.7/bin/") exec-path))
-
+;; Cask setting
+;;
 (require 'cask "~/.cask/cask.el")
 (cask-initialize)
 (require 'pallet)
 
-;; (require 'package)
-;; (add-to-list 'package-archives
-;; 	     '("melpa" . "http://melpa.milkbox.net/packages/") t)
-;; (package-initialize)
-(elpy-enable)
+;; Path
+;;
+(when (memq window-system '(mac ns))
+  (exec-path-from-shell-initialize))
 
+;; Python
+;;
+(require 'elpy)
+(elpy-enable)
+(elpy-use-ipython)
+
+;; Ack
+;;
+(require 'ack-and-a-half)
+;; Create shorter aliases
+(defalias 'ack 'ack-and-a-half)
+(defalias 'ack-same 'ack-and-a-half-same)
+(defalias 'ack-find-file 'ack-and-a-half-find-file)
+(defalias 'ack-find-file-same 'ack-and-a-half-find-file-same)
+
+;; Theme
+;;
 (load-theme 'sanityinc-tomorrow-day t)
+
+;; Magit
+;;
 (require 'magit)
-(global-set-key (kbd "C-x C-z") 'magit-status)
 
 (require 'cl)				; common lisp goodies, loop
 
+
+;; el-get 
+;;
 (add-to-list 'load-path "~/.emacs.d/el-get/el-get")
 
 (unless (require 'el-get nil t)
@@ -65,14 +83,14 @@
 	  :url "https://github.com/manzyuk/google-translate"
 	  :compile "google-translate.el")
 
+   (:name smartparens
+	  :type git
+	  :url "https://github.com/Fuco1/smartparens")
+
    (:name emacs-flymake
 	  :type git
 	  :url "https://github.com/illusori/emacs-flymake"
 	  :compile "flymake.el")
-
-;;   (:name magit				; git meet emacs, and a binding
-;;   	  :after (progn
-;;   		   (global-set-key (kbd "C-x C-z") 'magit-status)))
 
    (:name goto-last-change		; move pointer back to last change
 	  :after (progn
@@ -84,10 +102,6 @@
  my:el-get-packages
  '(el-get				; el-get is self-hosting
    escreen            			; screen for emacs, C-\ C-h
-   color-theme-sanityinc
-   color-theme-tomorrow
-   color-theme-solarized
-   color-theme-tangotango
 ;;   php-mode-improved			; if you're into php...
    switch-window			; takes over C-x o
    auto-complete			; complete as you type with overlays
@@ -95,8 +109,6 @@
    auto-complete-yasnippet  ; yasnippet
    auto-complete-clang
    zencoding-mode			; http://www.emacswiki.org/emacs/ZenCoding
-;;   color-theme		                ; nice looking emacs
-   color-theme-tango
    ace-jump-mode
    expand-region
    powerline
@@ -125,6 +137,14 @@
 (el-get 'sync my:el-get-packages)
 
 (require 'powerline)
+
+(require 'smartparens-config)
+(smartparens-global-mode)
+(show-smartparens-global-mode t)
+(sp-with-modes '(rhtml-mode)
+ (sp-local-pair "<" ">")
+ (sp-local-pair "<%" "%>"))
+
 (require 'flymake)
 (setq flymake-run-in-place nil)
 (setq temporary-file-directory "~/.emacs.d/tmp")
@@ -134,7 +154,6 @@
 
 ;; auto-complete-clang
 (require 'auto-complete-clang)
-
 
 ;;(setq ac-auto-start nil)
 ;;(ac-set-trigger-key "TAB")
@@ -165,7 +184,7 @@
 
 ;; google-translate
 (require 'google-translate)
-(global-set-key "\C-ct" 'google-translate-at-point)
+
 
 (setq google-translate-enable-ido-completion 1)
 (setq google-translate-default-source-language nil)
@@ -176,6 +195,9 @@
 (line-number-mode 1)			; have line numbers and
 (column-number-mode 1)			; column numbers in the mode line
 
+(setq indent-tabs-mode nil) ; insert spaces instead of tabs
+
+(show-paren-mode 1)
 (tool-bar-mode -1)			; no tool bar with icons
 (scroll-bar-mode -1)			; no scroll bars
 (unless (string-match "apple-darwin" system-configuration)
@@ -212,7 +234,10 @@
   )
 
 ;; Use the clipboard, pretty please, so that copy/paste "works"
-(setq x-select-enable-clipboard t)
+(setq x-select-enable-clipboard t
+      save-place-file (concat user-emacs-directory "places")
+      backup-directory-alist `(("." . ,(concat user-emacs-directory
+					       "backups"))))
 
 ;; Navigate windows with M-<arrows>
 (windmove-default-keybindings 'meta)
@@ -240,12 +265,6 @@
 ;; The default way to toggle between them is C-c C-j and C-c C-k, let's
 ;; better use just one key to do the same.
 (require 'term)
-(define-key term-raw-map  (kbd "C-'") 'term-line-mode)
-(define-key term-mode-map (kbd "C-'") 'term-char-mode)
-
-;; Have C-y act as usual in term-mode, to avoid C-' C-y C-'
-;; Well the real default would be C-c C-j C-y C-c C-k.
-(define-key term-raw-map  (kbd "C-y") 'term-paste)
 
 ;; use ido for minibuffer completion
 (require 'ido)
@@ -254,15 +273,6 @@
 (setq ido-enable-flex-matching t)
 (setq ido-use-filename-at-point 'guess)
 (setq ido-show-dot-for-dired t)
-
-;; default key to switch buffer is C-x b, but that's not easy enough
-;;
-;; when you do that, to kill emacs either close its frame from the window
-;; manager or do M-x kill-emacs.  Don't need a nice shortcut for a once a
-;; week (or day) action.
-(global-set-key (kbd "C-x C-b") 'ido-switch-buffer)
-(global-set-key (kbd "C-x C-c") 'ido-switch-buffer)
-(global-set-key (kbd "C-x B") 'ibuffer)
 
 ;; C-x C-j opens dired with the cursor right on the file you're editing
 (require 'dired-x)
@@ -292,9 +302,6 @@
 (add-hook 'org-mode-hook (lambda ()  (setq org-agenda-include-diary t)))
 (setq org-default-notes-file "~/Documents/Orgs/notes.org")
 
-(global-set-key "\C-ca" 'org-agenda)
-(global-set-key "\C-cl" 'org-store-link)
-
 ;; Diary
 (setq diary-file "~/Dropbox/diary")
 (display-time)
@@ -313,12 +320,67 @@
     `european-calendar-style' is nil, and D1, M1, Y1, N otherwise."
   (diary-remind '(diary-date m1 d1 y1) (let (value) (dotimes (number n value) (setq value (cons number value))))))
 
-;; Ace jump mode
-(define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
-
+;; Expand-region
 (require 'expand-region)
+
+;; flx-ido
+(require 'flx-ido)
+(flx-ido-mode 1)
+;;(setq flx-ido-threshhold 1000)
+
+;; Project Management
+;;
+(require 'ack-and-a-half)
+(require 'projectile)
+(projectile-global-mode)
+
+
+;; Key bindings
+;;
+
+(global-set-key "\C-cd" 'dash-at-point) ;; dash-at-point
+
+(sp-use-smartparens-bindings)
+(global-set-key (kbd "H-SPC") 'set-rectangular-region-anchor)
+(global-set-key (kbd "C-x r q") 'save-buffers-kill-terminal)
+
+(global-set-key (kbd "C-x g") 'magit-status)
+
 (global-set-key (kbd "H-+") 'er/expand-region)
 (global-set-key (kbd "H-_") 'er/contract-region)
+(define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
+
+(global-set-key "\C-ca" 'org-agenda)
+(global-set-key "\C-cl" 'org-store-link)
+
+(global-set-key (kbd "C-x C-b") 'ido-switch-buffer)
+(global-set-key (kbd "C-x C-c") 'ido-switch-buffer)
+
+(global-set-key (kbd "M-/") 'hippie-expand)
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+
+(global-set-key "\C-ct" 'google-translate-at-point)
+
+;; Have C-y act as usual in term-mode, to avoid C-' C-y C-'
+;; Well the real default would be C-c C-j C-y C-c C-k.
+(define-key term-raw-map  (kbd "C-y") 'term-paste)
+
+(define-key term-raw-map  (kbd "C-'") 'term-line-mode)
+(define-key term-mode-map (kbd "C-'") 'term-char-mode)
+
+(global-set-key (kbd "C-s") 'isearch-forward-regexp)
+(global-set-key (kbd "C-r") 'isearch-backward-regexp)
+(global-set-key (kbd "C-M-s") 'isearch-forward)
+(global-set-key (kbd "C-M-r") 'isearch-backward)
+
+(require 'grizzl)
+(projectile-global-mode)
+(setq projectile-enable-caching t)
+(setq projectile-completion-system 'grizzl)
+;; Press Command-p for fuzzy find in project
+(global-set-key (kbd "s-p") 'projectile-find-file)
+;; Press Command-b for fuzzy switch buffer
+(global-set-key (kbd "s-b") 'projectile-switch-to-buffer)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
