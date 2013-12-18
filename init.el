@@ -10,7 +10,7 @@
 ;; This file is NOT part of GNU Emacs.
 (setq max-lisp-eval-depth 9999)
 (setq max-specpdl-size 9999)
-
+(server-start)
 ;; Cask setting
 ;;
 (require 'cask "~/.cask/cask.el")
@@ -65,7 +65,7 @@
 ;; set local recipes
 (setq
  el-get-sources
- '((:name buffer-move			; have to add your own keys
+ '((:name buffer-move			; have to add your own 
 	  :after (progn
 		   (global-set-key (kbd "<C-S-up>")     'buf-move-up)
 		   (global-set-key (kbd "<C-S-down>")   'buf-move-down)
@@ -82,10 +82,6 @@
 	  :type git
 	  :url "https://github.com/manzyuk/google-translate"
 	  :compile "google-translate.el")
-
-   (:name smartparens
-	  :type git
-	  :url "https://github.com/Fuco1/smartparens")
 
    (:name emacs-flymake
 	  :type git
@@ -110,7 +106,7 @@
    auto-complete-clang
    zencoding-mode			; http://www.emacswiki.org/emacs/ZenCoding
    ace-jump-mode
-   expand-region
+   ;; expand-region			
    powerline
    ))	                ; check out color-theme-solarized
 
@@ -185,6 +181,29 @@
 ;; google-translate
 (require 'google-translate)
 
+;; IDO recentf
+(require 'ido)
+(require 'recentf)
+(setq recentf-max-saved-items 25)
+(recentf-mode 1)
+(defun recentf-ido-find-file ()
+  "Find a recent file using Ido."
+  (interactive)
+  (let* ((file-assoc-list
+	  (mapcar (lambda (x)
+		    (cons (file-name-nondirectory x)
+			  x))
+		  recentf-list))
+	 (filename-list
+	  (remove-duplicates (mapcar #'car file-assoc-list)
+			     :test #'string=))
+	 (filename (ido-completing-read "Choose recent file: "
+					filename-list
+					nil
+					t)))
+    (when filename
+      (find-file (cdr (assoc filename
+			     file-assoc-list))))))
 
 (setq google-translate-enable-ido-completion 1)
 (setq google-translate-default-source-language nil)
@@ -197,7 +216,7 @@
 
 (setq indent-tabs-mode nil) ; insert spaces instead of tabs
 
-(show-paren-mode 1)
+;;(show-paren-mode 1)
 (tool-bar-mode -1)			; no tool bar with icons
 (scroll-bar-mode -1)			; no scroll bars
 (unless (string-match "apple-darwin" system-configuration)
@@ -333,14 +352,93 @@
 (require 'ack-and-a-half)
 (require 'projectile)
 (projectile-global-mode)
+(setq projectile-completion-system 'grizzl)
+
+;; JS2mode
+;;
+(require 'js2-mode)
+(setq js2-bounce-indent-p t)
+(add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+(add-to-list 'auto-mode-alist '("\\.json$" . js2-mode))
+
+(setq my-emacs-root "~/.emacs.d/")
+(setenv "NODE_PATH" (concat (getenv "NODE_PATH") (if (getenv "NODE_PATH") path-separator "") (concat my-emacs-root "node_modules/")))
+(setenv "NODE_NO_READLINE" "1")
+;; (require 'ac-js2)
+;; (require 'auto-complete)
+(require 'js2-imenu-extras)
+(add-hook 'js2-mode-hook 'js2-imenu-extras-mode)
+(add-hook 'js2-mode-hook 'skewer-mode)
+(add-hook 'js2-mode-hook 'ac-js2-mode)
+(setq ac-js2-evaluate-calls t)
+
+(js2-imenu-extras-setup)
+;; Use lambda for anonymous functions
+(font-lock-add-keywords
+ 'js2-mode `(("\\(function\\) *("
+              (0 (progn (compose-region (match-beginning 1)
+                                        (match-end 1) "\u0192")
+                        nil)))))
+
+;; Use right arrow for return in one-line functions
+(font-lock-add-keywords
+ 'js2-mode `(("function *([^)]*) *{ *\\(return\\) "
+              (0 (progn (compose-region (match-beginning 1)
+                                        (match-end 1) "\u2190")
+                        nil)))))
 
 
+(eval-after-load "js2-mode"
+  '(progn
+     (setq js2-missing-semi-one-line-override t)
+     (setq-default js2-basic-offset 4) ; 2 spaces for indentation (if you prefer 2 spaces instead of default 4 spaces for tab)
+
+     ;; add from jslint global variable declarations to js2-mode globals list
+     ;; modified from one in http://www.emacswiki.org/emacs/Js2Mode
+     (defun my-add-jslint-declarations ()
+       (when (> (buffer-size) 0)
+         (let ((btext (replace-regexp-in-string
+                       (rx ":" (* " ") "true") " "
+                       (replace-regexp-in-string
+                        (rx (+ (char "\n\t\r "))) " "
+                        ;; only scans first 1000 characters
+                        (save-restriction (widen) (buffer-substring-no-properties (point-min) (min (1+ 1000) (point-max)))) t t))))
+           (mapc (apply-partially 'add-to-list 'js2-additional-externs)
+                 (split-string
+                  (if (string-match (rx "/*" (* " ") "global" (* " ") (group (*? nonl)) (* " ") "*/") btext)
+                      (match-string-no-properties 1 btext) "")
+                  (rx (* " ") "," (* " ")) t))
+           )))
+     (add-hook 'js2-post-parse-callbacks 'my-add-jslint-declarations)))
+
+(require 'js2-refactor)
+
+(require 'tern)
+(when (executable-find "tern")
+  (add-hook 'js2-mode-hook (lambda () (tern-mode t)))
+  (eval-after-load 'auto-complete
+    '(eval-after-load 'tern
+       '(progn
+	  (require 'tern-auto-complete)
+	  (tern-ac-setup)))))
+
+
+;; Helm
+;;
+(require 'helm-config)
+(helm-mode 1)
 ;; Key bindings
 ;;
+(global-set-key (kbd "C-c h") 'helm-mini)
+
+(js2r-add-keybindings-with-prefix "C-c C-m")
 
 (global-set-key "\C-cd" 'dash-at-point) ;; dash-at-point
 
 (sp-use-smartparens-bindings)
+
+(define-key sp-keymap (kbd "C-{") 'sp-select-previous-thing)
+(define-key sp-keymap (kbd "C-}") 'sp-select-next-thing)
 (global-set-key (kbd "H-SPC") 'set-rectangular-region-anchor)
 (global-set-key (kbd "C-x r q") 'save-buffers-kill-terminal)
 
@@ -355,6 +453,7 @@
 
 (global-set-key (kbd "C-x C-b") 'ido-switch-buffer)
 (global-set-key (kbd "C-x C-c") 'ido-switch-buffer)
+(global-set-key (kbd "C-x r") 'recentf-ido-find-file)
 
 (global-set-key (kbd "M-/") 'hippie-expand)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
@@ -375,6 +474,7 @@
 
 (require 'grizzl)
 (projectile-global-mode)
+
 (setq projectile-enable-caching t)
 (setq projectile-completion-system 'grizzl)
 ;; Press Command-p for fuzzy find in project
@@ -395,3 +495,4 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+(put 'upcase-region 'disabled nil)
