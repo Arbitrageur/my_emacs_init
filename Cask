@@ -43,3 +43,6 @@
 (depends-on "tern")
 (depends-on "tern-auto-complete")
 (depends-on "bookmark+")
+(depends-on "helm-projectile")
+(depends-on "color-theme-sanityinc-solarized")
+(depends-on "dired+")

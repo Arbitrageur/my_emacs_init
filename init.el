@@ -39,7 +39,9 @@
 
 ;; Theme
 ;;
-(load-theme 'sanityinc-tomorrow-day t)
+;; (load-theme 'sanityinc-tomorrow-day t)
+;; (load-theme 'sanityinc-solarized-light t)
+(load-theme 'sanityinc-solarized-dark t)
 
 ;; Magit
 ;;
@@ -295,6 +297,7 @@
 
 ;; C-x C-j opens dired with the cursor right on the file you're editing
 (require 'dired-x)
+(require 'dired+)
 
 ;; full screen
 (defun fullscreen ()
@@ -427,6 +430,7 @@
 ;;
 (require 'helm-config)
 (helm-mode 1)
+
 ;; Key bindings
 ;;
 (global-set-key (kbd "C-c h") 'helm-mini)
@@ -453,7 +457,7 @@
 
 (global-set-key (kbd "C-x C-b") 'ido-switch-buffer)
 (global-set-key (kbd "C-x C-c") 'ido-switch-buffer)
-(global-set-key (kbd "C-x r") 'recentf-ido-find-file)
+(global-set-key (kbd "C-x C-r") 'recentf-ido-find-file)
 
 (global-set-key (kbd "M-/") 'hippie-expand)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
@@ -478,7 +482,9 @@
 (setq projectile-enable-caching t)
 (setq projectile-completion-system 'grizzl)
 ;; Press Command-p for fuzzy find in project
-(global-set-key (kbd "s-p") 'projectile-find-file)
+(global-set-key (kbd "s-f") 'projectile-find-file)
+(global-set-key (kbd "C-c p f") 'find-file-in-project)
+(global-set-key (kbd "s-p") 'projectile-switch-project)
 ;; Press Command-b for fuzzy switch buffer
 (global-set-key (kbd "s-b") 'projectile-switch-to-buffer)
 
@@ -487,6 +493,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(bmkp-last-as-first-bookmark-file "~/.emacs.d/bookmarks")
  '(custom-safe-themes (quote ("bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" default)))
  '(org-agenda-files (quote ("~/Documents/Orgs/todo.org" "~/Documents/Orgs/work.org"))))
 (custom-set-faces
