@@ -41,7 +41,8 @@
 ;;
 ;; (load-theme 'sanityinc-tomorrow-day t)
 ;; (load-theme 'sanityinc-solarized-light t)
-(load-theme 'sanityinc-solarized-dark t)
+;; (load-theme 'sanityinc-solarized-dark t)
+(load-theme 'spacegray t)
 
 ;; Magit
 ;;
@@ -80,11 +81,6 @@
 		   (global-set-key (kbd "M-x") 'smex)
 		   (global-set-key (kbd "M-X") 'smex-major-mode-commands)))
 
-   (:name google-translate
-	  :type git
-	  :url "https://github.com/manzyuk/google-translate"
-	  :compile "google-translate.el")
-
    (:name emacs-flymake
 	  :type git
 	  :url "https://github.com/illusori/emacs-flymake"
@@ -100,15 +96,12 @@
  my:el-get-packages
  '(el-get				; el-get is self-hosting
    escreen            			; screen for emacs, C-\ C-h
-;;   php-mode-improved			; if you're into php...
    switch-window			; takes over C-x o
    auto-complete			; complete as you type with overlays
    auto-complete-emacs-lisp
    auto-complete-yasnippet  ; yasnippet
    auto-complete-clang
    zencoding-mode			; http://www.emacswiki.org/emacs/ZenCoding
-   ace-jump-mode
-   ;; expand-region			
    powerline
    ))	                ; check out color-theme-solarized
 
@@ -180,8 +173,13 @@
 (setq yas-snippet-dirs '("~/.emacs.d/el-get/yasnippet/snippets"))
 (mapc 'yas-load-directory yas-snippet-dirs)
 
-;; google-translate
-(require 'google-translate)
+
+;; edbi
+(require 'edbi)
+
+(require 'e2wm)
+(autoload 'e2wm:dp-edbi "e2wm-edbi" nil t)
+(global-set-key (kbd "s-d") 'e2wm:dp-edbi)
 
 ;; IDO recentf
 (require 'ido)
@@ -207,9 +205,23 @@
       (find-file (cdr (assoc filename
 			     file-assoc-list))))))
 
-(setq google-translate-enable-ido-completion 1)
-(setq google-translate-default-source-language nil)
-(setq google-translate-default-target-language nil)
+;; ESS
+(require 'ess-site)
+(setq ess-use-auto-complete t)
+
+;; Web-mode
+;;
+(require 'web-mode)
+(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.tmpl\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
+
+(defun web-mode-hook ()
+  "Hooks for Web mode."
+  (setq web-mode-markup-indent-offset 4)
+  (setq web-mode-css-indent-offset 4)
+  (setq web-mode-code-indent-offset 4))
+(add-hook 'web-mode-hook 'web-mode-hook)
 
 ;; on to the visual settings
 (setq inhibit-splash-screen t)		; no splash screen, thanks
